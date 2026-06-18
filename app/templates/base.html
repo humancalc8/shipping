@@ -76,8 +76,66 @@
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
 
-  <!-- ===== GOOGLE ONE TAP (synchronous — no defer/async) ===== -->
+  <!-- ===== GOOGLE ONE TAP
+       FIX 1: Define the global callback BEFORE loading the GSI script,
+               so it's guaranteed to exist when Google calls it.
+       FIX 2: Load GSI script WITHOUT defer/async so it is ready
+               synchronously (matches Google's own recommendation).
+  ===== -->
   {% if not user.is_authenticated %}
+  <script>
+    /* ── Helper: read CSRF cookie ──────────────────────────────────── */
+    function getCsrfToken() {
+      var val = null;
+      if (document.cookie) {
+        document.cookie.split(";").forEach(function (c) {
+          var t = c.trim();
+          if (t.startsWith("csrftoken=")) {
+            val = decodeURIComponent(t.slice("csrftoken=".length));
+          }
+        });
+      }
+      return val;
+    }
+
+    /* ── FIX 3: Attach callback to window so Google can reach it ───── */
+    window.handleGoogleOneTap = function (credentialResponse) {
+      if (!credentialResponse || !credentialResponse.credential) {
+        console.warn("[OneTap] No credential received.");
+        return;
+      }
+      if (typeof showSiteLoader === "function") {
+        showSiteLoader("Signing you in with Google...");
+      }
+      fetch("{% url 'google_one_tap_callback' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken()
+        },
+        body: JSON.stringify({ credential: credentialResponse.credential })
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error("Server error " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (data.success) {
+          window.location.href = data.redirect_url || "/orders/";
+        } else {
+          if (typeof hideSiteLoader === "function") hideSiteLoader();
+          alert(data.message || "Google sign-in failed. Please try again.");
+        }
+      })
+      .catch(function (err) {
+        console.error("[OneTap] Error:", err);
+        if (typeof hideSiteLoader === "function") hideSiteLoader();
+        alert("Google sign-in failed. Please try again.");
+      });
+    };
+  </script>
+
+  <!-- FIX 4: Load GSI synchronously (no defer/async) AFTER callback is defined -->
   <script src="https://accounts.google.com/gsi/client"></script>
   {% endif %}
 
@@ -166,7 +224,6 @@
       </a>
 
       {% if user.is_authenticated %}
-        <!-- ✅ FIX: Logged-in users see the quote button too, goes directly -->
         <a href="{% url 'quote' %}"
            class="drawer-quote-btn quote-link"
            data-auth="true"
@@ -174,7 +231,6 @@
           <i class="fa-solid fa-file-invoice"></i> Request a Quote
         </a>
       {% else %}
-        <!-- Guest: login button + quote CTA that redirects via loader -->
         <a href="{% url 'login' %}" class="drawer-login-btn">
           <i class="fa-solid fa-right-to-bracket"></i> Login
         </a>
@@ -303,12 +359,30 @@
 
       <div class="footer-bottom">
         <p>&copy; <span id="year"></span> SABBTCo. All Rights Reserved.</p>
-        <p class="footer-credit">DESIGNED AND DEVELOPED BY TINGTECH TECHNOLOGIES</p>
+        <p class="footer-credit">DESIGNED AND DEVELOPED BY TINGSTECH TECHNOLOGIES</p>
         <p>Tel: 0727698319</p>
       </div>
     </footer>
 
   </div><!-- END #mainContent -->
+
+  <!-- =====================================================================
+       GOOGLE ONE TAP ANCHOR
+       FIX 5: Placed OUTSIDE #mainContent (blur filter won't hide it),
+               BEFORE the init script, with correct attributes.
+               data-callback must match the window.handleGoogleOneTap name.
+  ===================================================================== -->
+  {% if not user.is_authenticated %}
+  <div id="g_id_onload"
+       data-client_id="{{ GOOGLE_CLIENT_ID }}"
+       data-callback="handleGoogleOneTap"
+       data-auto_prompt="true"
+       data-auto_select="false"
+       data-cancel_on_tap_outside="true"
+       data-itp_support="true"
+       data-ux_mode="popup">
+  </div>
+  {% endif %}
 
   <!-- CHAT ASSISTANT -->
   <div id="chatbot-container">
@@ -386,24 +460,10 @@
   </div>
 
   <!-- =====================================================================
-       GOOGLE ONE TAP — outside #mainContent so blur filter never affects it
-       ===================================================================== -->
-  {% if not user.is_authenticated %}
-  <div id="g_id_onload"
-       data-client_id="{{ GOOGLE_CLIENT_ID }}"
-       data-callback="handleGoogleOneTap"
-       data-auto_prompt="true"
-       data-auto_select="false"
-       data-cancel_on_tap_outside="false"
-       data-itp_support="true"
-       data-ux_mode="popup">
-  </div>
-  {% endif %}
-
-  <!-- =====================================================================
        MAIN SCRIPTS
        ===================================================================== -->
   <script>
+  /* ── Loader helpers — defined first so One Tap callback can call them ── */
   function showSiteLoader(message) {
     var loader = document.getElementById("siteLoader");
     var status = document.getElementById("loaderStatus");
@@ -473,10 +533,7 @@
       if (profileDropdown) profileDropdown.classList.remove("active");
     });
 
-    /* --- QUOTE LINKS ---
-         data-auth="true"  → go straight to quote page (with loader)
-         data-auth="false" → show loader then redirect to login?next=quote
-    ------------------------------------------------------------------ */
+    /* --- QUOTE LINKS --- */
     document.querySelectorAll(".quote-link").forEach(function (link) {
       link.addEventListener("click", function (e) {
         e.preventDefault();
@@ -638,83 +695,48 @@
 
   <!-- =====================================================================
        GOOGLE ONE TAP INIT
-       ===================================================================== -->
+       FIX 6: google.accounts.id.initialize() is called here (after GSI
+               loaded synchronously in <head>). The #g_id_onload div above
+               already triggers auto-prompt via data-auto_prompt="true",
+               but we also call prompt() explicitly for reliability.
+  ===================================================================== -->
   {% if not user.is_authenticated %}
   <script>
   (function () {
     var CLIENT_ID = "{{ GOOGLE_CLIENT_ID }}";
 
-    function getCsrfToken() {
-      var val = null;
-      if (document.cookie) {
-        document.cookie.split(";").forEach(function (c) {
-          var t = c.trim();
-          if (t.startsWith("csrftoken=")) {
-            val = decodeURIComponent(t.slice("csrftoken=".length));
-          }
-        });
-      }
-      return val;
-    }
-
-    function handleGoogleOneTap(credentialResponse) {
-      if (!credentialResponse || !credentialResponse.credential) {
-        console.warn("[OneTap] No credential received.");
-        return;
-      }
-      showSiteLoader("Signing you in with Google...");
-      fetch("{% url 'google_one_tap_callback' %}", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCsrfToken()
-        },
-        body: JSON.stringify({ credential: credentialResponse.credential })
-      })
-      .then(function (res) {
-        if (!res.ok) throw new Error("Server error " + res.status);
-        return res.json();
-      })
-      .then(function (data) {
-        if (data.success) {
-          window.location.href = data.redirect_url || "/orders/";
-        } else {
-          hideSiteLoader();
-          alert(data.message || "Google sign-in failed. Please try again.");
-        }
-      })
-      .catch(function (err) {
-        console.error("[OneTap] Error:", err);
-        hideSiteLoader();
-        alert("Google sign-in failed. Please try again.");
-      });
-    }
-
     function initOneTap() {
       if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
+        /* GSI not ready yet — retry in 300 ms */
         setTimeout(initOneTap, 300);
         return;
       }
       if (!CLIENT_ID) {
-        console.error("[OneTap] GOOGLE_CLIENT_ID is empty.");
+        console.error("[OneTap] GOOGLE_CLIENT_ID is empty — check your Django context processor.");
         return;
       }
+
       google.accounts.id.initialize({
         client_id:             CLIENT_ID,
-        callback:              handleGoogleOneTap,
+        callback:              window.handleGoogleOneTap,  /* always use the window reference */
         auto_select:           false,
-        cancel_on_tap_outside: false,
+        cancel_on_tap_outside: true,   /* FIX: false was silently suppressing the prompt */
         itp_support:           true
       });
+
+      /* Explicitly trigger the prompt (belt-and-suspenders alongside the div) */
       google.accounts.id.prompt(function (notification) {
         if (notification.isNotDisplayed()) {
           console.warn("[OneTap] Not displayed:", notification.getNotDisplayedReason());
         } else if (notification.isSkippedMoment()) {
           console.warn("[OneTap] Skipped:", notification.getSkippedReason());
+        } else if (notification.isDismissedMoment()) {
+          console.info("[OneTap] Dismissed:", notification.getDismissedReason());
         }
       });
     }
 
+    /* Run as soon as the DOM is ready */
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", initOneTap);
     } else {
@@ -1205,11 +1227,6 @@ a.btn-primary:hover {
 .footer-links a { display: block; margin-bottom: 8px; }
 .footer-links a:hover { color: var(--blue) !important; }
 
-/* ── Footer contact rows ────────────────────────────────────────────
-   Static text rows (location) keep the old <p> style.
-   Clickable rows (.footer-contact-link) are <a> tags styled to look
-   identical but light up on hover and show a pointer cursor.
-   ─────────────────────────────────────────────────────────────────── */
 .footer-contact p {
   display: flex;
   align-items: center;
@@ -1699,4 +1716,3 @@ a.btn-primary:hover {
 
 </body>
 </html>
-
