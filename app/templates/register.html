@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<section class="section">
+  <div class="container login-grid">
+
+    <div>
+      <span class="chip">Create Account</span>
+
+      <h1 style="margin-top:1rem">
+        Join <span class="accent">SABBTCo.</span>
+      </h1>
+
+      <p style="margin-top:1rem;color:var(--muted)">
+        Register to manage shipments and orders.
+      </p>
+    </div>
+
+    <div class="form-card">
+      <h2>Create Account</h2>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="field">
+          <label>Username</label>
+          <input type="text" name="username" required>
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" required>
+        </div>
+
+        <div class="field">
+          <label>Password</label>
+          <input type="password" name="password1" required>
+        </div>
+
+        <div class="field">
+          <label>Confirm Password</label>
+          <input type="password" name="password2" required>
+        </div>
+
+        <button class="btn btn-primary btn-block" type="submit">
+          Register
+        </button>
+      </form>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

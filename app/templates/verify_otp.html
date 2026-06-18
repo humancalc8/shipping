@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container login-grid">
+
+    <div>
+      <h1>Verify your email</h1>
+      <p>OTP sent to: <strong>{{ email }}</strong></p>
+    </div>
+
+    <div class="form-card">
+
+      {% if message %}
+        <p style="color:green; margin-bottom:10px;">
+          {{ message }}
+        </p>
+      {% endif %}
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="field">
+          <label>OTP Code</label>
+          <input type="text" name="otp" placeholder="6-digit code" required>
+        </div>
+
+        {% if error %}
+          <p style="color:red; margin-bottom:10px;">
+            {{ error }}
+          </p>
+        {% endif %}
+
+        <button class="btn btn-primary btn-block" type="submit">
+          Verify OTP
+        </button>
+      </form>
+
+      <!-- RESEND OTP -->
+      <form method="POST" style="margin-top:10px;">
+        {% csrf_token %}
+        <button name="resend" value="1" class="btn btn-secondary btn-block">
+          Resend OTP
+        </button>
+      </form>
+
+      <!-- CHANGE EMAIL -->
+      <form method="POST" action="{% url 'change_email' %}" style="margin-top:10px;">
+        {% csrf_token %}
+        <input type="email" name="email" placeholder="Edit email address" required>
+        <button class="btn btn-secondary btn-block">
+          Change Email
+        </button>
+      </form>
+
+    </div>
+
+  </div>
+</section>
+{% endblock %}
