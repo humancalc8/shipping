@@ -535,7 +535,7 @@
             <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="fa-solid fa-chart-line"></i> Dashboard
             </a>
-            <a href="{% url 'Orders' %}" class="{% if request.resolver_match.url_name == 'orders' %}active{% endif %}">
+            <a href="{% url 'orders' %}" class="{% if request.resolver_match.url_name == 'orders' %}active{% endif %}">
                 <i class="fa-solid fa-box"></i> Orders
             </a>
             <a href="{% url 'shipment_dashboard' %}" class="{% if request.resolver_match.url_name == 'shipment_dashboard' %}active{% endif %}">
@@ -666,7 +666,7 @@
 
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
             <h3>Recent Orders</h3>
-            <a href="{% url 'Orders' %}"
+            <a href="{% url 'orders' %}"
                style="color:#dc2626;font-weight:700;text-decoration:none;">
                 View All
             </a>
