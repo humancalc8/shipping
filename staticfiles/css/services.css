@@ -150,3 +150,12 @@ gap:10px;
 text-align:center;
 }
 }
+.loader-overlay{
+    display:none;   /* important */
+    position:fixed;
+    inset:0;
+    background:rgba(255,255,255,.85);
+    z-index:99999;
+    justify-content:center;
+    align-items:center;
+}
