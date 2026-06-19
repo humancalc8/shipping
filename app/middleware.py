@@ -10,3 +10,5 @@ class LoginRequiredMiddleware:
             if request.path not in ['/accounts/login/', '/accounts/google/login/']:
                 return redirect('account_login')
         return self.get_response(request)
+    
+
