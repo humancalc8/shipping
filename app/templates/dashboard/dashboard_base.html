@@ -535,15 +535,15 @@
             <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="fa-solid fa-chart-line"></i> Dashboard
             </a>
-            <a href="{% url 'orders' %}" class="{% if request.resolver_match.url_name == 'orders' %}active{% endif %}">
-                <i class="fa-solid fa-box"></i> Orders
+            <a href="{% url 'Orders_alt' %}"
+   class="{% if request.resolver_match.url_name == 'Orders_alt' %}active{% endif %}">
+    <i class="fa-solid fa-box"></i> Orders
+</a>
             </a>
             <a href="{% url 'shipment_dashboard' %}" class="{% if request.resolver_match.url_name == 'shipment_dashboard' %}active{% endif %}">
                 <i class="fa-solid fa-ship"></i> Shipments
             </a>
-            <a href="#">
-                <i class="fa-solid fa-industry"></i> Suppliers
-            </a>
+        
             <a href="{% url 'customers' %}" class="{% if request.resolver_match.url_name == 'customers' %}active{% endif %}">
                 <i class="fa-solid fa-users"></i> Customers
             </a>
@@ -567,9 +567,7 @@
         </a>
     </div>
 </div>
-            <a href="{% url 'supplier_payments' %}">
-    <i class="fa-solid fa-industry"></i> Suppliers
-</a>
+     
 <a href="{% url 'admin_logout' %}"
    onclick="return confirm('Logout from admin dashboard?')"
    style="color:#fca5a5;">
@@ -666,7 +664,7 @@
 
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
             <h3>Recent Orders</h3>
-            <a href="{% url 'orders' %}"
+            <a href="{% url 'Orders_alt' %}"
                style="color:#dc2626;font-weight:700;text-decoration:none;">
                 View All
             </a>

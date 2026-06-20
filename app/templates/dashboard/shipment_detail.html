@@ -153,11 +153,7 @@
     Uploading to Container: {{ shipment.container_number }}
 </h3>
 
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    <input type="file" name="shipment_image">
-    <button type="submit">Upload Shipment Image</button>
-</form>
+
 <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <input type="file" name="shipment_image">

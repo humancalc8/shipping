@@ -120,6 +120,7 @@ DATABASES = {
 }
 LOGIN_URL = "/login/"
 
+
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
@@ -176,12 +177,12 @@ LOCALE_PATHS = [
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
-DEBUG = True
+DEBUG = False
 LOGIN_URL = '/login/'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
-DEBUG = True
+DEBUG = False
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "orders"   # optional
@@ -211,7 +212,7 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
  
 DEFAULT_FROM_EMAIL = f'SABBTCo Logistics <{EMAIL_HOST_USER}>'
-ADMIN_EMAIL = 'sammytings2@gmail.com'
+ADMIN_EMAIL = 'S@gmail.com'
 
 ADMIN_PHONE = '+254727698319'
 SOCIALACCOUNT_PROVIDERS = {

@@ -516,7 +516,7 @@ def controldash(request):
 
 from django.contrib.auth.decorators import login_required, user_passes_test
 
-
+@login_required
 def dashboard(request):
     status = request.GET.get("status")
 
